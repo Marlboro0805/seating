@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSFiddle knzr9eu0</title>
+
+  <style>
+    .slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease-out;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+  </style>
+
+  
+</head>
+<body>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+<div id="app" class="h-screen flex flex-col bg-gray-50 font-sans">
+  <header
+    class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-10"
+  >
+    座席チェックインシステム
+  </header>
+
+  <main class="flex-1 overflow-auto relative" ref="mapContainer">
+    <div
+      class="relative inline-block min-w-[800px] w-full"
+      @click="getCoordinates"
+    >
+      <img
+        src="https://github.com/Marlboro0805/seating/blob/main/seating.png?raw=true"
+        class="w-full h-auto block select-none"
+        alt="間取り図"
+      />
+
+      <div
+        v-for="seat in seats"
+        :key="seat.id"
+        class="absolute w-8 h-8 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
+        :style="{ left: seat.x + '%', top: seat.y + '%' }"
+        :class="isOccupied(seat.id) ? 'bg-blue-600 scale-110' : 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse'"
+        @click.stop="openModal(seat)"
+      >
+        <span v-if="isOccupied(seat.id)">済</span>
+      </div>
+    </div>
+  </main>
+
+  <transition name="slide-up">
+    <div
+      v-if="selectedSeat"
+      class="fixed inset-0 z-50 flex flex-col justify-end"
+    >
+      <div
+        class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        @click="closeModal"
+      ></div>
+
+      <div
+        class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative z-10 shadow-2xl pb-10"
+      >
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+        <h2 class="text-xl font-bold mb-4">座席: {{ selectedSeat.name }}</h2>
+
+        <div v-if="isOccupied(selectedSeat.id)" class="space-y-3">
+          <div class="bg-blue-50 p-4 rounded-xl">
+            <p class="text-sm text-gray-500">利用カテゴリ</p>
+            <p class="font-bold text-lg">
+              {{ getOccupant(selectedSeat.id).category }}
+            </p>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-xl">
+            <p class="text-sm text-gray-500">お名前</p>
+            <p class="font-bold text-lg">
+              {{ getOccupant(selectedSeat.id).name }}
+            </p>
+          </div>
+          <div
+            class="bg-blue-50 p-4 rounded-xl"
+            v-if="getOccupant(selectedSeat.id).notes"
+          >
+            <p class="text-sm text-gray-500">備考</p>
+            <p class="font-bold">{{ getOccupant(selectedSeat.id).notes }}</p>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button
+              @click="closeModal"
+              class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700"
+            >
+              閉じる
+            </button>
+            <button
+              @click="vacateSeat"
+              class="flex-1 py-3 bg-red-500 font-bold rounded-xl text-white"
+            >
+              退席する
+            </button>
+          </div>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1"
+              >カテゴリ</label
+            >
+            <select
+              v-model="form.category"
+              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none bg-white"
+            >
+              <option value="利用者">利用者</option>
+              <option value="スタッフ">スタッフ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1"
+              >お名前</label
+            >
+            <input
+              v-model="form.name"
+              type="text"
+              placeholder="例: 山田太郎"
+              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1"
+              >備考 (任意)</label
+            >
+            <textarea
+              v-model="form.notes"
+              placeholder="PC利用、15時まで など"
+              rows="2"
+              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none"
+            ></textarea>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button
+              @click="closeModal"
+              class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700"
+            >
+              キャンセル
+            </button>
+            <button
+              @click="saveSeat"
+              :disabled="!form.name"
+              class="flex-1 py-3 bg-blue-600 font-bold rounded-xl text-white disabled:opacity-50"
+            >
+              座る
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
+</div>
+
+
+  <script>
+    import {
+  createApp,
+  ref,
+  reactive,
+  onMounted,
+} from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  deleteDoc,
+} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyBruI9HbBfAHFBPLJueNOtcHn8cUYdynJU',
+  authDomain: 'myapp-8f695.firebaseapp.com',
+  projectId: 'myapp-8f695',
+  storageBucket: 'myapp-8f695.firebasestorage.app',
+  messagingSenderId: '933723574220',
+  appId: '1:933723574220:web:6c37b1d93a5b03b4541769',
+  measurementId: 'G-6E21Y7F0ZR',
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+createApp({
+  setup() {
+    // 【座席の座標定義】
+    // x, y は画像全体の左上を0,0とした時のパーセンテージ(%)
+    // ※画像を差し替えたら、アイデア①の機能を使って座標を調整してください
+    const seats = ref([
+      { id: 'S1', name: '左上 机1', x: 22.5, y: 14.5 },
+      { id: 'S2', name: '左側 机2(上)', x: 15.5, y: 22.0 },
+      { id: 'S3', name: '左側 机2(下)', x: 16.0, y: 27.5 },
+      { id: 'S4', name: '斜め机1(左)', x: 33.5, y: 15.5 },
+      { id: 'S5', name: '斜め机1(右)', x: 38.5, y: 11.5 },
+      { id: 'S6', name: '右奥 ソファー(上)', x: 77.5, y: 28.0 },
+      { id: 'S7', name: '右奥 ソファー(下)', x: 78.0, y: 36.5 },
+      // ... 必要に応じて座席を追加
+    ]);
+
+    const activeSeats = ref({}); // Firebaseから取得した今日のデータ
+    const selectedSeat = ref(null);
+    const form = reactive({ category: '利用者', name: '', notes: '' });
+
+    // 今日の日付文字列を取得 (例: "2026-05-13")
+    const getTodayStr = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    onMounted(() => {
+      const today = getTodayStr();
+      // Firestoreの "seat_status" コレクションをリアルタイム監視
+      onSnapshot(collection(db, 'seat_status'), (snapshot) => {
+        const newData = {};
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          // 午前0時リセットのロジック: 保存された日付が「今日」のものだけ有効とする
+          if (data.date === today) {
+            newData[doc.id] = data;
+          }
+        });
+        activeSeats.value = newData;
+      });
+    });
+
+    const isOccupied = (id) => !!activeSeats.value[id];
+    const getOccupant = (id) => activeSeats.value[id] || {};
+
+    const openModal = (seat) => {
+      selectedSeat.value = seat;
+      if (!isOccupied(seat.id)) {
+        form.category = '利用者';
+        form.name = '';
+        form.notes = '';
+      }
+    };
+
+    const closeModal = () => {
+      selectedSeat.value = null;
+    };
+
+    const saveSeat = async () => {
+      if (!form.name) return;
+      const seatRef = doc(db, 'seat_status', selectedSeat.value.id);
+      await setDoc(seatRef, {
+        category: form.category,
+        name: form.name,
+        notes: form.notes,
+        date: getTodayStr(), // チェックインした日付を保存
+        timestamp: new Date(),
+      });
+      closeModal();
+    };
+
+    const vacateSeat = async () => {
+      if (confirm('退席しますか？')) {
+        await deleteDoc(doc(db, 'seat_status', selectedSeat.value.id));
+        closeModal();
+      }
+    };
+
+    // 開発者用お助けツール：クリックした場所の座標(%)をコンソールに出力
+    const getCoordinates = (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
+      const y = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
+      console.log(`{ id: 'NEW', name: '新規座席', x: ${x}, y: ${y} },`);
+    };
+
+    return {
+      seats,
+      activeSeats,
+      selectedSeat,
+      form,
+      isOccupied,
+      getOccupant,
+      openModal,
+      closeModal,
+      saveSeat,
+      vacateSeat,
+      getCoordinates,
+    };
+  },
+}).mount('#app');
+
+  </script>
+</body>
+</html>
