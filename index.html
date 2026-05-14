@@ -1,151 +1,98 @@
 <!DOCTYPE html>
+<html lang="ja">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>座席チェックインシステム</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>座席チェックインシステム</title>
+  <!-- Tailwind CSS の読み込み -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CSS ファイルの読み込み -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- アプリの本体 (v-cloakで起動前のチラつきを防止) -->
+  <div id="app" class="h-screen flex flex-col bg-gray-50 font-sans" v-cloak>
+    
+    <!-- ヘッダー -->
+    <header class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-10">
+      座席チェックインシステム
+    </header>
 
-<div id="app" class="h-screen flex flex-col bg-gray-50 font-sans">
-  <header
-    class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-10"
-  >
-    座席チェックインシステム
-  </header>
-
-  <main class="flex-1 overflow-auto relative" ref="mapContainer">
-    <div
-      class="relative inline-block min-w-[800px] w-full"
-      @click="getCoordinates"
-    >
-      <img
-        src="https://github.com/Marlboro0805/seating/blob/main/seating.png?raw=true"
-        class="w-full h-auto block select-none"
-        alt="間取り図"
-      />
-
-      <div
-        v-for="seat in seats"
-        :key="seat.id"
-        class="absolute w-8 h-8 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
-        :style="{ left: seat.x + '%', top: seat.y + '%' }"
-        :class="isOccupied(seat.id) ? 'bg-blue-600 scale-110' : 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse'"
-        @click.stop="openModal(seat)"
-      >
-        <span v-if="isOccupied(seat.id)">済</span>
-      </div>
-    </div>
-  </main>
-
-  <transition name="slide-up">
-    <div
-      v-if="selectedSeat"
-      class="fixed inset-0 z-50 flex flex-col justify-end"
-    >
-      <div
-        class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        @click="closeModal"
-      ></div>
-
-      <div
-        class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative z-10 shadow-2xl pb-10"
-      >
-        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
-        <h2 class="text-xl font-bold mb-4">座席: {{ selectedSeat.name }}</h2>
-
-        <div v-if="isOccupied(selectedSeat.id)" class="space-y-3">
-          <div class="bg-blue-50 p-4 rounded-xl">
-            <p class="text-sm text-gray-500">利用カテゴリ</p>
-            <p class="font-bold text-lg">
-              {{ getOccupant(selectedSeat.id).category }}
-            </p>
-          </div>
-          <div class="bg-blue-50 p-4 rounded-xl">
-            <p class="text-sm text-gray-500">お名前</p>
-            <p class="font-bold text-lg">
-              {{ getOccupant(selectedSeat.id).name }}
-            </p>
-          </div>
-          <div
-            class="bg-blue-50 p-4 rounded-xl"
-            v-if="getOccupant(selectedSeat.id).notes"
-          >
-            <p class="text-sm text-gray-500">備考</p>
-            <p class="font-bold">{{ getOccupant(selectedSeat.id).notes }}</p>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button
-              @click="closeModal"
-              class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700"
-            >
-              閉じる
-            </button>
-            <button
-              @click="vacateSeat"
-              class="flex-1 py-3 bg-red-500 font-bold rounded-xl text-white"
-            >
-              退席する
-            </button>
-          </div>
+    <!-- マップエリア（スクロール可能） -->
+    <main class="flex-1 overflow-auto relative" ref="mapContainer">
+      <div class="relative inline-block min-w-[800px] w-full" @click="getCoordinates">
+        <img src="https://github.com/Marlboro0805/seating/blob/main/seating.png?raw=true" class="w-full h-auto block select-none" alt="間取り図">
+        
+        <!-- 座席の当たり判定（オーバーレイ） -->
+        <div v-for="seat in seats" :key="seat.id"
+             class="absolute w-8 h-8 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
+             :style="{ left: seat.x + '%', top: seat.y + '%' }"
+             :class="isOccupied(seat.id) ? 'bg-blue-600 scale-110' : 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse'"
+             @click.stop="openModal(seat)">
+          <span v-if="isOccupied(seat.id)">済</span>
         </div>
+      </div>
+    </main>
 
-        <div v-else class="space-y-4">
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1"
-              >カテゴリ</label
-            >
-            <select
-              v-model="form.category"
-              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none bg-white"
-            >
-              <option value="利用者">利用者</option>
-              <option value="スタッフ">スタッフ</option>
-            </select>
+    <!-- 入力・確認モーダル（Bottom Sheet風） -->
+    <transition name="slide-up">
+      <div v-if="selectedSeat" class="fixed inset-0 z-50 flex flex-col justify-end">
+        <!-- 背景の暗転（タップで閉じる） -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
+        
+        <!-- モーダル本体 -->
+        <div class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative z-10 shadow-2xl pb-10">
+          <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
+          <h2 class="text-xl font-bold mb-4">座席: {{ selectedSeat.name }}</h2>
+
+          <!-- 既に座っている場合 -->
+          <div v-if="isOccupied(selectedSeat.id)" class="space-y-3">
+            <div class="bg-blue-50 p-4 rounded-xl">
+              <p class="text-sm text-gray-500">利用カテゴリ</p>
+              <p class="font-bold text-lg">{{ getOccupant(selectedSeat.id).category }}</p>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-xl">
+              <p class="text-sm text-gray-500">お名前</p>
+              <p class="font-bold text-lg">{{ getOccupant(selectedSeat.id).name }}</p>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-xl" v-if="getOccupant(selectedSeat.id).notes">
+              <p class="text-sm text-gray-500">備考</p>
+              <p class="font-bold">{{ getOccupant(selectedSeat.id).notes }}</p>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button @click="closeModal" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700">閉じる</button>
+              <button @click="vacateSeat" class="flex-1 py-3 bg-red-500 font-bold rounded-xl text-white">退席する</button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1"
-              >お名前</label
-            >
-            <input
-              v-model="form.name"
-              type="text"
-              placeholder="例: 山田太郎"
-              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1"
-              >備考 (任意)</label
-            >
-            <textarea
-              v-model="form.notes"
-              placeholder="PC利用、15時まで など"
-              rows="2"
-              class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none"
-            ></textarea>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button
-              @click="closeModal"
-              class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700"
-            >
-              キャンセル
-            </button>
-            <button
-              @click="saveSeat"
-              :disabled="!form.name"
-              class="flex-1 py-3 bg-blue-600 font-bold rounded-xl text-white disabled:opacity-50"
-            >
-              座る
-            </button>
+
+          <!-- 空席の場合（入力フォーム） -->
+          <div v-else class="space-y-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">カテゴリ</label>
+              <select v-model="form.category" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none bg-white">
+                <option value="利用者">利用者</option>
+                <option value="スタッフ">スタッフ</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">お名前</label>
+              <input v-model="form.name" type="text" placeholder="例: 山田太郎" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">備考 (任意)</label>
+              <textarea v-model="form.notes" placeholder="PC利用、15時まで など" rows="2" class="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 outline-none"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button @click="closeModal" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700">キャンセル</button>
+              <button @click="saveSeat" :disabled="!form.name" class="flex-1 py-3 bg-blue-600 font-bold rounded-xl text-white disabled:opacity-50">座る</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </transition>
-</div>
-<script type="module" src="main.js"></script> 
+    </transition>
+  </div>
+
+  <!-- JavaScript ファイルの読み込み (モジュールとして読み込む) -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>

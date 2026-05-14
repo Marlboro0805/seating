@@ -1,8 +1,14 @@
-.slide-up-enter-active,
+/* Vue.jsが起動するまでの間、画面を非表示にしておく（変な文字が見えるのを防ぐ） */
+[v-cloak] {
+  display: none !important;
+}
+
+/* 下からスライドしてくるアニメーション設定 */
+.slide-up-enter-active, 
 .slide-up-leave-active {
   transition: all 0.3s ease-out;
 }
-.slide-up-enter-from,
+.slide-up-enter-from, 
 .slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
