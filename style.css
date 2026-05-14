@@ -1,15 +1,21 @@
-/* Vue.jsが起動するまでの間、画面を非表示にしておく（変な文字が見えるのを防ぐ） */
+/* Vue起動前の非表示設定 */
 [v-cloak] {
   display: none !important;
 }
 
-/* 下からスライドしてくるアニメーション設定 */
+/* 入力画面のスライドアニメーション */
 .slide-up-enter-active, 
 .slide-up-leave-active {
-  transition: all 0.3s ease-out;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .slide-up-enter-from, 
 .slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
+}
+
+/* マップ内の画像がぼけないようにする設定 */
+img {
+  image-rendering: -webkit-optimize-contrast;
 }
