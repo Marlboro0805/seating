@@ -18,6 +18,31 @@ const db = getFirestore(app);
 
 createApp({
   setup() {
+    const lastClick = ref(null); // 最後にクリックした位置
+    const tempSeats = ref([]);    // クリックした座標のリスト
+
+const getCoordinates = (e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(1));
+  const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(1));
+  
+  // 画面上にマーカーを表示
+  lastClick.value = { x, y };
+  
+  // コピー用のコード文字列を生成
+  const nextId = seats.value.length + tempSeats.value.length + 1;
+  const codeLine = `{ id: 'S${nextId}', name: '座席 ${nextId}', x: ${x}, y: ${y} },`;
+  
+  // リストの先頭に追加（新しい順に見えるように）
+  tempSeats.value.unshift(codeLine);
+};
+
+// return に追加
+return {
+  // ...既存の変数...
+  getCoordinates, lastClick, tempSeats
+};
+
     // 【座席の座標定義】 (画像の該当箇所をクリックするとコンソールに座標が出ます)
     const seats = ref([
       { id: 'S1', name: '座席 1', x: 10, y: 10 },

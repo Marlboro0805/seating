@@ -31,6 +31,13 @@
              @click.stop="openModal(seat)">
           <span v-if="isOccupied(seat.id)">済</span>
         </div>
+
+	<div v-if="lastClick" class="absolute border-2 border-yellow-400 w-6 h-6 rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2"
+         :style="{ left: lastClick.x + '%', top: lastClick.y + '%' }">
+      		<div class="absolute top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1 rounded whitespace-nowrap">
+        x:{{ lastClick.x }}, y:{{ lastClick.y }}
+      	</div>
+    </div>
       </div>
     </main>
 
