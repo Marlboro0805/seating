@@ -26,10 +26,14 @@
         <!-- 座席の当たり判定（オーバーレイ） -->
         <div v-for="seat in seats" :key="seat.id"
              class="absolute w-8 h-8 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
-             :style="{ left: seat.x + '%', top: seat.y + '%' }"
-             :class="isOccupied(seat.id) ? 'bg-blue-600 scale-110' : 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse'"
-             @click.stop="openModal(seat)">
-          <span v-if="isOccupied(seat.id)">済</span>
+     	     :style="{ left: seat.x + '%', top: seat.y + '%' }"
+             :class="[
+       		!isOccupied(seat.id) ? 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse' : 'scale-110 shadow-md',
+       		isOccupied(seat.id) && getOccupant(seat.id).category === '利用者' ? 'bg-blue-600' : '',
+       		isOccupied(seat.id) && getOccupant(seat.id).category === 'スタッフ' ? 'bg-green-600' : ''
+     	     ]"
+     	     @click.stop="openModal(seat)">
+  	     <span v-if="isOccupied(seat.id)">済</span>
         </div>
 
 	<div v-if="lastClick" class="absolute border-2 border-yellow-400 w-6 h-6 rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2"
