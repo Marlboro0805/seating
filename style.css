@@ -1,9 +1,14 @@
-/* Vue起動前の非表示設定 */
-[v-cloak] {
-  display: none !important;
+[v-cloak] { display: none !important; }
+
+/* ページ全体のスクロールを禁止し、mainの中だけスクロール可能にする */
+body, html {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
-/* 入力画面のスライドアニメーション */
+/* スライドアップアニメーション */
 .slide-up-enter-active, 
 .slide-up-leave-active {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -15,7 +20,7 @@
   opacity: 0;
 }
 
-/* マップ内の画像がぼけないようにする設定 */
+/* 画像がぼやけないように設定 */
 img {
   image-rendering: -webkit-optimize-contrast;
 }

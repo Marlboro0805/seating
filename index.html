@@ -6,11 +6,14 @@
   <title>座席チェックインシステム</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    [v-cloak] { display: none !important; }
+  </style>
 </head>
 <body>
-  <div id="app" class="h-screen flex flex-col bg-gray-50 font-sans" v-cloak>
+  <div id="app" class="h-screen flex flex-col bg-gray-50 font-sans overflow-hidden" v-cloak>
     
-    <header class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-10 flex-shrink-0">
+    <header class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-20 flex-shrink-0">
       座席チェックインシステム
     </header>
 
@@ -43,9 +46,9 @@
       </div>
     </main>
 
-    <div class="bg-gray-800 text-green-400 p-2 text-[10px] font-mono h-24 overflow-y-auto border-t border-gray-600 flex-shrink-0">
+    <div class="bg-gray-800 text-green-400 p-2 text-[10px] font-mono h-24 overflow-y-auto border-t border-gray-600 flex-shrink-0 z-20">
       <div class="flex justify-between items-center mb-1 text-gray-400 border-b border-gray-700 pb-1">
-        <span>デバッグ: 画像クリックで座標コードが生成されます</span>
+        <span>デバッグ: 画像クリックで座標コード生成</span>
         <button @click="tempSeats = []" class="bg-gray-700 px-2 rounded hover:bg-gray-600">クリア</button>
       </div>
       <div v-for="(code, index) in tempSeats" :key="index" class="hover:bg-gray-700 p-0.5 select-all">
@@ -56,11 +59,12 @@
     <transition name="slide-up">
       <div v-if="selectedSeat" class="fixed inset-0 z-[100] flex flex-col justify-end">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal"></div>
-        <div class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative z-10 shadow-2xl pb-10">
+        
+        <div class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 relative z-10 shadow-2xl pb-10 text-base">
           <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div>
           <h2 class="text-xl font-bold mb-4 text-gray-800">座席: {{ selectedSeat.name }}</h2>
 
-          <div v-if="isOccupied(selectedSeat.id)" class="space-y-3">
+          <div v-if="isOccupied(selectedSeat.id)" class="space-y-4">
             <div class="flex gap-3">
               <div class="flex-1 bg-gray-100 p-4 rounded-xl">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">カテゴリ</p>
@@ -78,8 +82,8 @@
               <p class="text-gray-700 font-medium">{{ getOccupant(selectedSeat.id).notes }}</p>
             </div>
             <div class="flex gap-3 mt-6">
-              <button @click="closeModal" class="flex-1 py-4 bg-gray-200 font-bold rounded-2xl text-gray-700 active:scale-95 transition-transform">閉じる</button>
-              <button @click="vacateSeat" class="flex-1 py-4 bg-red-500 font-bold rounded-2xl text-white active:scale-95 transition-transform">退席する</button>
+              <button @click="closeModal" class="flex-1 py-4 bg-gray-200 font-bold rounded-2xl text-gray-700">閉じる</button>
+              <button @click="vacateSeat" class="flex-1 py-4 bg-red-500 font-bold rounded-2xl text-white">退席する</button>
             </div>
           </div>
 
@@ -96,12 +100,12 @@
               <input v-model="form.name" type="text" placeholder="例: 山田太郎" class="w-full border-2 border-gray-100 p-4 rounded-2xl focus:border-blue-500 outline-none bg-gray-50 text-base">
             </div>
             <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">備考 (任意)</label>
+              <label class="block text-xs font-bold text-gray-500 mb-1 ml-1">備考</label>
               <textarea v-model="form.notes" placeholder="PC利用など" rows="2" class="w-full border-2 border-gray-100 p-4 rounded-2xl focus:border-blue-500 outline-none bg-gray-50 text-base"></textarea>
             </div>
             <div class="flex gap-3 mt-6">
               <button @click="closeModal" class="flex-1 py-4 bg-gray-100 font-bold rounded-2xl text-gray-500">キャンセル</button>
-              <button @click="saveSeat" :disabled="!form.name" class="flex-1 py-4 bg-blue-600 font-bold rounded-2xl text-white disabled:opacity-30 active:scale-95 transition-transform shadow-lg shadow-blue-200">座る</button>
+              <button @click="saveSeat" :disabled="!form.name" class="flex-1 py-4 bg-blue-600 font-bold rounded-2xl text-white disabled:opacity-30 shadow-lg shadow-blue-200">座る</button>
             </div>
           </div>
         </div>
