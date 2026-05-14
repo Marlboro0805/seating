@@ -17,8 +17,6 @@ const db = getFirestore(firebaseApp);
 
 createApp({
   setup() {
-    const zoomScale = ref(1.0); // ズーム倍率 (1.0 = 1000px)
-    
     // 40席分のデータ
     const seats = ref([
       { id: 'S1', name: '1', x: 19.2, y: 12.9 },
@@ -69,23 +67,15 @@ createApp({
     const lastClick = ref(null);
     const tempSeats = ref([]);
 
-    // ズーム（拡大・縮小）処理: 0.5倍(500px) 〜 3.0倍(3000px) の間で制御
-    const changeZoom = (delta) => {
-      const newScale = zoomScale.value + delta;
-      if (newScale >= 0.5 && newScale <= 3.0) {
-        zoomScale.value = newScale;
-      }
-    };
-
     const getTodayStr = () => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
 
     onMounted(() => {
+      const today = getTodayStr();
       onSnapshot(collection(db, "seat_status"), (snapshot) => {
         const newData = {};
-        const today = getTodayStr();
         snapshot.forEach(doc => {
           const data = doc.data();
           if (data.date === today) { newData[doc.id] = data; }
@@ -100,7 +90,9 @@ createApp({
     const openModal = (seat) => {
       selectedSeat.value = seat;
       if (!isOccupied(seat.id)) {
-        form.category = '利用者'; form.name = ''; form.notes = '';
+        form.category = '利用者';
+        form.name = '';
+        form.notes = '';
       }
     };
 
@@ -122,20 +114,19 @@ createApp({
       }
     };
 
-    // 座標取得処理（widthが変動しても、取得する％はズレません）
     const getCoordinates = (e) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(1));
       const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(1));
-      
       lastClick.value = { x, y };
       const nextId = seats.value.length + tempSeats.value.length + 1;
-      tempSeats.value.unshift(`{ id: 'S${nextId}', name: '座席 ${nextId}', x: ${x}, y: ${y} },`);
+      const codeLine = `{ id: 'S${nextId}', name: '座席 ${nextId}', x: ${x}, y: ${y} },`;
+      tempSeats.value.unshift(codeLine);
     };
 
     return {
-      zoomScale, seats, activeSeats, selectedSeat, form, isOccupied, getOccupant, 
-      openModal, closeModal, saveSeat, vacateSeat, getCoordinates, lastClick, tempSeats, changeZoom
+      seats, activeSeats, selectedSeat, form, isOccupied, getOccupant, 
+      openModal, closeModal, saveSeat, vacateSeat, getCoordinates, lastClick, tempSeats
     };
   }
 }).mount('#app');

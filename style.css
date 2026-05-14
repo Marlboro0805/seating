@@ -1,29 +1,43 @@
 [v-cloak] { display: none !important; }
 
-/* ページ全体の操作を固定し、勝手なズームを防止 */
+/* ページ全体の挙動を固定 */
 html, body {
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  touch-action: none; /* ピンチズームやスワイプをブラウザレベルで禁止 */
-  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 全体のスクロール禁止 */
+  overscroll-behavior: none; /* スワイプ時のバウンス禁止 */
 }
 
-/* 入力欄のフォントサイズを16pxに強制し、iOSの自動ズームを防ぐ */
-input, select, textarea {
+/* モーダルエリアでのピンチズーム・ダブルタップズームを完全に無効化 */
+.prevent-zoom {
+  touch-action: none;
+}
+
+/* ★超重要: iOS Safariの自動ズームを防ぐため、入力欄のフォントサイズを絶対に16px以上にする */
+.prevent-zoom-input {
   font-size: 16px !important;
+  line-height: normal !important;
 }
 
-/* アニメーション */
-.slide-up-enter-active, .slide-up-leave-active {
+/* マップエリアのみ操作を許可 */
+.map-scroll-area {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+/* スライドアップアニメーション */
+.slide-up-enter-active, 
+.slide-up-leave-active {
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
 }
-.slide-up-enter-from, .slide-up-leave-to {
+
+.slide-up-enter-from, 
+.slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
 }
 
-/* 画質の劣化を防ぐ */
 img {
   image-rendering: -webkit-optimize-contrast;
 }
