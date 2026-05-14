@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>座席チェックインシステム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <!-- Tailwind CSS の読み込み -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- CSS ファイルの読み込み -->
@@ -25,7 +26,7 @@
         
         <!-- 座席の当たり判定（オーバーレイ） -->
         <div v-for="seat in seats" :key="seat.id"
-             class="absolute w-8 h-8 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
+             class="absolute w-6 h-6 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-xs text-white font-bold"
      	     :style="{ left: seat.x + '%', top: seat.y + '%' }"
              :class="[
        		!isOccupied(seat.id) ? 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse' : 'scale-110 shadow-md',
