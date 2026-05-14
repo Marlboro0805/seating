@@ -17,7 +17,9 @@ const db = getFirestore(firebaseApp);
 
 createApp({
   setup() {
-    const zoomScale = ref(1.0); // ズーム倍率
+    const zoomScale = ref(1.0); // ズーム倍率 (1.0 = 1000px)
+    
+    // 40席分のデータ
     const seats = ref([
       { id: 'S1', name: '1', x: 19.2, y: 12.9 },
       { id: 'S2', name: '2', x: 30.0, y: 9.2 },
@@ -67,6 +69,7 @@ createApp({
     const lastClick = ref(null);
     const tempSeats = ref([]);
 
+    // ズーム（拡大・縮小）処理: 0.5倍(500px) 〜 3.0倍(3000px) の間で制御
     const changeZoom = (delta) => {
       const newScale = zoomScale.value + delta;
       if (newScale >= 0.5 && newScale <= 3.0) {
@@ -119,13 +122,9 @@ createApp({
       }
     };
 
-    // ズーム倍率を考慮して正しい座標を計算する
+    // 座標取得処理（widthが変動しても、取得する％はズレません）
     const getCoordinates = (e) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      // rect.width は拡大後のサイズなので、zoomScaleで割って元のサイズに戻してから％計算
-      const originalWidth = rect.width / zoomScale.value;
-      const originalHeight = rect.height / zoomScale.value;
-      
       const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(1));
       const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(1));
       

@@ -1,19 +1,15 @@
 [v-cloak] { display: none !important; }
 
-/* ページ全体の操作制限 */
+/* ページ全体の操作を固定し、勝手なズームを防止 */
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  touch-action: none; /* ピンチズームをブラウザレベルで禁止 */
+  touch-action: none; /* ピンチズームやスワイプをブラウザレベルで禁止 */
+  overscroll-behavior: none;
 }
 
-/* マップエリアのみスクロール可能にする */
-main {
-  touch-action: pan-x pan-y; /* スクロールのみ許可、ピンチは禁止 */
-}
-
-/* モーダル内の入力欄がズームされないための絶対設定 */
+/* 入力欄のフォントサイズを16pxに強制し、iOSの自動ズームを防ぐ */
 input, select, textarea {
   font-size: 16px !important;
 }
@@ -25,6 +21,11 @@ input, select, textarea {
 .slide-up-enter-from, .slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
+}
+
+/* 画質の劣化を防ぐ */
+img {
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .text-green-400 {

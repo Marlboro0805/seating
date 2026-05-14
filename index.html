@@ -13,20 +13,27 @@
 <body class="fixed inset-0 w-full h-full overflow-hidden bg-gray-100 font-sans">
   <div id="app" class="absolute inset-0 flex flex-col" v-cloak>
     
+    <!-- ヘッダー -->
     <header class="bg-blue-600 text-white p-4 text-center font-bold shadow-md z-30 flex-shrink-0">
       座席チェックインシステム
     </header>
 
-    <main class="flex-1 overflow-auto relative bg-gray-300 touch-none" ref="mapContainer">
-      <div class="relative inline-block origin-top-left transition-transform duration-200" 
-           :style="{ transform: `scale(${zoomScale})` }"
+    <!-- マップエリア (この中がスクロールされる) -->
+    <!-- iOSでのスムーズなスクロールのために -webkit-overflow-scrolling を適用 -->
+    <main class="flex-1 overflow-auto relative bg-gray-300 touch-pan-x touch-pan-y" style="-webkit-overflow-scrolling: touch;" ref="mapContainer">
+      
+      <!-- ★拡大・縮小されるコンテナ（widthを直接変動させることでスクロール枠を広げる） -->
+      <div class="relative transition-all duration-300 ease-out" 
+           :style="{ width: `${1000 * zoomScale}px` }"
            @click="getCoordinates">
         
+        <!-- 間取り図画像 -->
         <img src="https://github.com/Marlboro0805/seating/blob/main/seating.png?raw=true" 
-             class="block select-none pointer-events-none" style="width: 1000px; height: auto;">
+             class="w-full h-auto block select-none pointer-events-none" alt="間取り図">
         
+        <!-- 座席アイコン -->
         <div v-for="seat in seats" :key="seat.id"
-             class="absolute w-6 h-6 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-sm flex items-center justify-center text-white font-bold"
+             class="absolute w-12 h-12 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer shadow-sm flex items-center justify-center text-white font-bold"
              :style="{ left: seat.x + '%', top: seat.y + '%' }"
              :class="[
                !isOccupied(seat.id) ? 'bg-red-500/40 border-2 border-red-500 animate-pulse' : 'scale-110 shadow-md',
@@ -34,11 +41,12 @@
                isOccupied(seat.id) && getOccupant(seat.id).category === 'スタッフ' ? 'bg-green-600' : ''
              ]"
              @click.stop="openModal(seat)">
-          <span v-if="isOccupied(seat.id)" class="text-lg">
+          <span v-if="isOccupied(seat.id)" class="text-xl">
             {{ getOccupant(seat.id).name ? getOccupant(seat.id).name.substring(0, 1) : '' }}
           </span>
         </div>
 
+        <!-- デバッグガイド -->
         <div v-if="lastClick" class="absolute border-2 border-yellow-400 w-8 h-8 rounded-full pointer-events-none transform -translate-x-1/2 -translate-y-1/2"
              :style="{ left: lastClick.x + '%', top: lastClick.y + '%' }">
           <div class="absolute top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1 rounded whitespace-nowrap z-50">
@@ -48,16 +56,18 @@
       </div>
     </main>
 
-    <div class="fixed bottom-28 right-6 flex flex-col gap-3 z-40">
-      <button @click="changeZoom(0.2)" class="w-14 h-14 bg-white/90 border border-gray-200 rounded-full shadow-xl flex items-center justify-center text-3xl text-blue-600 active:bg-blue-100 transition-colors">＋</button>
-      <button @click="changeZoom(-0.2)" class="w-14 h-14 bg-white/90 border border-gray-200 rounded-full shadow-xl flex items-center justify-center text-3xl text-blue-600 active:bg-blue-100 transition-colors">ー</button>
-      <div class="bg-black/60 text-white text-[10px] text-center rounded py-1 px-2">{{ Math.round(zoomScale * 100) }}%</div>
+    <!-- ズームコントロールボタン (パーセント表示は削除) -->
+    <div class="fixed bottom-28 right-6 flex flex-col gap-4 z-40">
+      <button @click="changeZoom(0.2)" class="w-14 h-14 bg-white/95 border border-gray-200 rounded-full shadow-xl flex items-center justify-center text-3xl text-blue-600 active:bg-blue-100 transition-colors">＋</button>
+      <button @click="changeZoom(-0.2)" class="w-14 h-14 bg-white/95 border border-gray-200 rounded-full shadow-xl flex items-center justify-center text-3xl text-blue-600 active:bg-blue-100 transition-colors">ー</button>
     </div>
 
+    <!-- デバッグパネル -->
     <div class="bg-gray-800 text-green-400 p-2 text-[10px] font-mono h-24 overflow-y-auto border-t border-gray-600 flex-shrink-0 z-20">
       <div v-for="(code, index) in tempSeats" :key="index" class="p-0.5 select-all">{{ code }}</div>
     </div>
 
+    <!-- 入力モーダル -->
     <transition name="slide-up">
       <div v-if="selectedSeat" class="fixed inset-0 z-[100] flex flex-col justify-end">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeModal"></div>
@@ -75,6 +85,10 @@
                 <p class="text-[10px] text-gray-400 font-bold uppercase">お名前</p>
                 <p class="font-bold text-lg">{{ getOccupant(selectedSeat.id).name }}</p>
               </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100" v-if="getOccupant(selectedSeat.id).notes">
+              <p class="text-[10px] text-gray-400 font-bold uppercase">備考</p>
+              <p class="font-medium text-gray-700">{{ getOccupant(selectedSeat.id).notes }}</p>
             </div>
             <div class="flex gap-3 mt-6">
               <button @click="closeModal" class="flex-1 py-4 bg-gray-100 font-bold rounded-2xl text-gray-600">閉じる</button>
