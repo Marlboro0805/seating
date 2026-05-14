@@ -1,20 +1,7 @@
-import {
-  createApp,
-  ref,
-  reactive,
-  onMounted,
-} from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
-import {
-  getFirestore,
-  collection,
-  onSnapshot,
-  doc,
-  setDoc,
-  deleteDoc,
-} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+import { createApp, ref, reactive, onMounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: 'AIzaSyBruI9HbBfAHFBPLJueNOtcHn8cUYdynJU',
   authDomain: 'myapp-8f695.firebaseapp.com',
@@ -25,15 +12,12 @@ const firebaseConfig = {
   measurementId: 'G-6E21Y7F0ZR',
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 createApp({
   setup() {
-    const lastClick = ref(null); // 最後にクリックした位置
-    const tempSeats = ref([]); // クリックした座標のリスト
-
-    // 【座席の座標定義】 (画像の該当箇所をクリックするとコンソールに座標が出ます)
+    const zoomScale = ref(1.0); // ズーム倍率
     const seats = ref([
       { id: 'S1', name: '1', x: 19.2, y: 12.9 },
       { id: 'S2', name: '2', x: 30.0, y: 9.2 },
@@ -80,24 +64,28 @@ createApp({
     const activeSeats = ref({});
     const selectedSeat = ref(null);
     const form = reactive({ category: '利用者', name: '', notes: '' });
+    const lastClick = ref(null);
+    const tempSeats = ref([]);
 
-    // 今日の日付を取得
+    const changeZoom = (delta) => {
+      const newScale = zoomScale.value + delta;
+      if (newScale >= 0.5 && newScale <= 3.0) {
+        zoomScale.value = newScale;
+      }
+    };
+
     const getTodayStr = () => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
 
     onMounted(() => {
-      const today = getTodayStr();
-      // データベースをリアルタイム監視
-      onSnapshot(collection(db, 'seat_status'), (snapshot) => {
+      onSnapshot(collection(db, "seat_status"), (snapshot) => {
         const newData = {};
-        snapshot.forEach((doc) => {
+        const today = getTodayStr();
+        snapshot.forEach(doc => {
           const data = doc.data();
-          // 午前0時リセット: 保存された日付が今日のものだけ表示
-          if (data.date === today) {
-            newData[doc.id] = data;
-          }
+          if (data.date === today) { newData[doc.id] = data; }
         });
         activeSeats.value = newData;
       });
@@ -109,68 +97,46 @@ createApp({
     const openModal = (seat) => {
       selectedSeat.value = seat;
       if (!isOccupied(seat.id)) {
-        form.category = '利用者';
-        form.name = '';
-        form.notes = '';
+        form.category = '利用者'; form.name = ''; form.notes = '';
       }
     };
 
-    const closeModal = () => {
-      selectedSeat.value = null;
-    };
+    const closeModal = () => { selectedSeat.value = null; };
 
     const saveSeat = async () => {
       if (!form.name) return;
-      const seatRef = doc(db, 'seat_status', selectedSeat.value.id);
-      await setDoc(seatRef, {
-        category: form.category,
-        name: form.name,
-        notes: form.notes,
-        date: getTodayStr(),
-        timestamp: new Date(),
+      await setDoc(doc(db, "seat_status", selectedSeat.value.id), {
+        category: form.category, name: form.name, notes: form.notes,
+        date: getTodayStr(), timestamp: new Date()
       });
       closeModal();
     };
 
     const vacateSeat = async () => {
-      if (confirm('退席しますか？')) {
-        await deleteDoc(doc(db, 'seat_status', selectedSeat.value.id));
+      if(confirm('退席しますか？')) {
+        await deleteDoc(doc(db, "seat_status", selectedSeat.value.id));
         closeModal();
       }
     };
 
-    // 開発用：画像をクリックした場所の座標を調べる機能
+    // ズーム倍率を考慮して正しい座標を計算する
     const getCoordinates = (e) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      const x = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
-      const y = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
-      console.log(`{ id: 'NEW', name: '新規座席', x: ${x}, y: ${y} },`);
-
-      // 画面上にマーカーを表示
-      // lastClick.value = { x, y };
-
-      // コピー用のコード文字列を生成
+      // rect.width は拡大後のサイズなので、zoomScaleで割って元のサイズに戻してから％計算
+      const originalWidth = rect.width / zoomScale.value;
+      const originalHeight = rect.height / zoomScale.value;
+      
+      const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(1));
+      const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(1));
+      
+      lastClick.value = { x, y };
       const nextId = seats.value.length + tempSeats.value.length + 1;
-      const codeLine = `{ id: 'S${nextId}', name: '座席 ${nextId}', x: ${x}, y: ${y} },`;
-
-      // リストの先頭に追加（新しい順に見えるように）
-      tempSeats.value.unshift(codeLine);
+      tempSeats.value.unshift(`{ id: 'S${nextId}', name: '座席 ${nextId}', x: ${x}, y: ${y} },`);
     };
 
     return {
-      seats,
-      activeSeats,
-      selectedSeat,
-      form,
-      isOccupied,
-      getOccupant,
-      openModal,
-      closeModal,
-      saveSeat,
-      vacateSeat,
-      getCoordinates,
-      lastClick,
-      tempSeats,
+      zoomScale, seats, activeSeats, selectedSeat, form, isOccupied, getOccupant, 
+      openModal, closeModal, saveSeat, vacateSeat, getCoordinates, lastClick, tempSeats, changeZoom
     };
-  },
+  }
 }).mount('#app');
