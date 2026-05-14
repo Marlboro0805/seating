@@ -20,7 +20,7 @@
              class="w-full h-auto block select-none" alt="間取り図">
         
         <div v-for="seat in seats" :key="seat.id"
-             class="absolute w-12 h-12 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-white font-bold"
+             class="absolute w-6 h-6 rounded-full transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 shadow-sm flex items-center justify-center text-white font-bold"
              :style="{ left: seat.x + '%', top: seat.y + '%' }"
              :class="[
                !isOccupied(seat.id) ? 'bg-red-500/30 border-2 border-red-500 hover:bg-red-500/50 animate-pulse' : 'scale-110 shadow-md',
