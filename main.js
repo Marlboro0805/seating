@@ -73,6 +73,12 @@ createApp({
     };
 
     onMounted(() => {
+      document.addEventListener('touchmove', (event) => {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
       const today = getTodayStr();
       onSnapshot(collection(db, "seat_status"), (snapshot) => {
         const newData = {};

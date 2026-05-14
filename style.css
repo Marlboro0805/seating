@@ -9,6 +9,12 @@ html, body {
   overscroll-behavior: none;
 }
 
+/* ★スクロールは許可し、ピンチズームのみをCSSレベルで禁止 */
+.map-scroll-area {
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch; /* iOSでの滑らかなスクロール用 */
+}
+
 /* モーダルエリアでのピンチズーム・ダブルタップズームを完全に無効化 */
 .prevent-zoom {
   touch-action: none;
